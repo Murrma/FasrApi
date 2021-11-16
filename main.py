@@ -3,16 +3,24 @@ from typing import List
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
+from fastapi.middleware.cors import CORSMiddleware
+
 import crud
 import models
 import schemas
 from database import SessionLocal, engine
 
-
 models.Base.metadata.create_all(bind=engine)
 
-
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+)
 
 
 # Dependency
@@ -25,7 +33,7 @@ def get_db():
 
 
 @app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def create_user(user: schemas.User, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -48,9 +56,9 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 
 @app.post("/users/{user_id}/items/", response_model=schemas.Item)
 def create_item_for_user(
-    user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
+        item: schemas.Item, db: Session = Depends(get_db)
 ):
-    return crud.create_user_item(db=db, item=item, user_id=user_id)
+    return crud.create_user_item(db=db, item=item)
 
 
 @app.get("/items/", response_model=List[schemas.Item])
@@ -59,29 +67,6 @@ def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return items
 
 
-
-'''class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Optional[bool] = None
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Optional[str] = None):
-    return {"item_id": item_id, "q": q}
-
-
-@app.post("/items/")
-async def create_item(item: Item):
-    return item
-
-
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item": item, "item_id": item_id}
-'''
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app)
