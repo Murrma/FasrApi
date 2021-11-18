@@ -5,18 +5,26 @@ from pydantic import BaseModel
 class ItemBase(BaseModel):
     title: str
     description: Optional[str] = None
+    owner_id: int
+
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
 
 
 class Item(ItemBase):
     id: int
-    owner_id: int
 
 
 class UserBase(BaseModel):
     email: str
     password: str
 
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
+
 
 class User(UserBase):
     id: int
-    items: List[Item] = []
+    #item: List[Item] = []
